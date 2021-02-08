@@ -1,0 +1,19 @@
+on: [push, pull_request]
+
+name: Clippy annotations
+
+jobs:
+  clippy_check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      - name: Install Clippy component
+        run: rustup component add clippy
+
+      - name: Add Clippy annotations to GitHub diff
+        uses: actions-rs/clippy-check@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          args: --all-features
