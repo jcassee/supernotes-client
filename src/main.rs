@@ -3,7 +3,6 @@ use std::{fs, io};
 
 use anyhow::{Context, Result};
 use clap::{crate_version, App, AppSettings, Arg, ArgSettings, SubCommand};
-use markdown;
 use oauth2::basic::{BasicClient, BasicTokenResponse};
 use oauth2::reqwest::http_client;
 use oauth2::{
@@ -15,10 +14,9 @@ use reqwest::Url;
 use serde_json::{json, Value};
 use uuid::Uuid;
 
-const NAME: &'static str = "sn";
-const VERSION: &'static str = crate_version!();
-
-const BASE_URL: &'static str = "https://api.supernotes.app/v1/";
+const NAME: &str = "sn";
+const VERSION: &str = crate_version!();
+const BASE_URL: &str = "https://api.supernotes.app/v1/";
 
 fn main() -> Result<()> {
     let matches = App::new(NAME)
