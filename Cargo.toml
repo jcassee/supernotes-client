@@ -1,8 +1,10 @@
 [package]
 name = "supernotes-client"
 version = "0.1.0"
-authors = ["Joost Cassee <joost@cassee.net>"]
 description = "Supernotes client"
+authors = ["Joost Cassee <joost@cassee.net>"]
+repository = "https://github.com/jcassee/supernotes-client"
+license = "MIT"
 edition = "2018"
 
 [[bin]]
@@ -19,4 +21,5 @@ serde_json = "1"
 uuid = { version = "0.8", features = ["serde", "v4"] }
 
 [dev-dependencies]
+assert_cmd = "1"
 mockito = "0.29"
