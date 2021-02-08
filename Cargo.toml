@@ -1,0 +1,22 @@
+[package]
+name = "supernotes-client"
+version = "0.1.0"
+authors = ["Joost Cassee <joost@cassee.net>"]
+description = "Supernotes client"
+edition = "2018"
+
+[[bin]]
+name = "sn"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = "1"
+clap = "2"
+markdown = "0.3"
+oauth2 = "4.0.0-alpha.3"
+reqwest = { version = "0.11", features = ["blocking", "json"] }
+serde_json = "1"
+uuid = { version = "0.8", features = ["serde", "v4"] }
+
+[dev-dependencies]
+mockito = "0.29"
