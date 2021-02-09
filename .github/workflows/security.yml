@@ -20,8 +20,6 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: nightly
-          override: true
 
       - name: Run audit check
         uses: actions-rs/audit-check@v1
