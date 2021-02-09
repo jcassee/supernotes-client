@@ -21,7 +21,7 @@ jobs:
           command: check
 
   test:
-    name: Test
+    name: Test with coverage
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
@@ -32,10 +32,22 @@ jobs:
         with:
           profile: minimal
 
-      - name: Run cargo test
+      - name: Run cargo test with coverage
         uses: actions-rs/cargo@v1
         with:
           command: test
+          args: --all-features --no-fail-fast
+        env:
+          CARGO_INCREMENTAL: '0'
+          RUSTFLAGS: '-Zprofile -Ccodegen-units=1 -Copt-level=0 -Clink-dead-code -Coverflow-checks=off -Zpanic_abort_tests -Cpanic=abort'
+          RUSTDOCFLAGS: '-Cpanic=abort'
+
+      - name: Generate coverage report
+        uses: actions-rs/grcov@v0.1
+
+      - name: Upload coverage to Codecov
+        with:
+          files: ${{ steps.coverage.outputs.report }}
 
   lints:
     name: Lint
