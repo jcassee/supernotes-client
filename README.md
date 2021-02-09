@@ -1,6 +1,6 @@
 # Supernotes Client
 
-This is a simple command line [Supernotes](https://supernotes.app/) client
+This is a simple command line [Supernotes](https://supernotes.app/) tool
 written in Rust. Currently it only creates new cards.
 
 
@@ -12,8 +12,8 @@ Supernotes username and password, or use the `-u` and `-p` options.
 
 ### Creating a new card
 
-Use the `create` (or `c`) command to create a new card. Specify the card title
-and the file that contains the card body.
+Use the `create` command to create a new card. Specify the card title and the
+file that contains the card body.
 
     sn create "Meeting notes" notes.md
 
