@@ -22,7 +22,6 @@ jobs:
           profile: minimal
           toolchain: nightly
           override: true
-          components: cargo-audit
 
       - name: Run audit check
         uses: actions-rs/audit-check@v1
