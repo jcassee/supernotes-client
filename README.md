@@ -23,3 +23,10 @@ If the file is omitted, the body is read from the standard input.
     - Milk
     - Bread
     .
+
+## Build
+
+The Cargo manifest is set up to optimize and strip the release binary, so you
+need to use the nightly toolchain.
+
+    cargo +nightly -Z unstable-options build --release
