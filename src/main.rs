@@ -250,3 +250,4 @@ mod tests {
         assert_eq!(card["card"]["html"], "<ul>\n<li>item</li>\n</ul>\n");
     }
 }
+//[cfg(test)]
