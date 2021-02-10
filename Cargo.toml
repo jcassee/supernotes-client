@@ -3,11 +3,17 @@ cargo-features = ["strip"]
 [package]
 name = "supernotes-client"
 version = "0.1.0"
-description = "Supernotes command line tool"
+description = "Supernotes command line utility"
 authors = ["Joost Cassee <joost@cassee.net>"]
 repository = "https://github.com/jcassee/supernotes-client"
+categories = ["command-line-utilities"]
+keywords = ["notes", "supernotes"]
 license = "MIT"
 edition = "2018"
+exclude = [
+    ".gitignore",
+    ".github",
+]
 
 [[bin]]
 name = "sn"
