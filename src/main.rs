@@ -1,8 +1,7 @@
 use std::io::Read;
 use std::{fs, io};
 
-use anyhow::{Context, Result};
-use clap::{crate_version, App, AppSettings, Arg, ArgSettings, SubCommand};
+use anyhow::{anyhow, Context, Result};
 use oauth2::basic::{BasicClient, BasicTokenResponse};
 use oauth2::reqwest::http_client;
 use oauth2::{
@@ -12,83 +11,85 @@ use oauth2::{
 use reqwest::blocking::Response;
 use reqwest::Url;
 use serde_json::{json, Value};
+use structopt::clap::AppSettings;
+use structopt::StructOpt;
 use uuid::Uuid;
 
 const NAME: &str = "sn";
-const VERSION: &str = crate_version!();
 const BASE_URL: &str = "https://api.supernotes.app/v1/";
 
-fn main() -> Result<()> {
-    let matches = App::new(NAME)
-        .version(VERSION)
-        .about("SuperNotes client")
-        .setting(AppSettings::SubcommandRequired)
-        .setting(AppSettings::UnifiedHelpMessage)
-        .setting(AppSettings::GlobalVersion)
-        .arg(
-            Arg::with_name("username")
-                .short("u")
-                .long("username")
-                .value_name("USERNAME")
-                .env("SN_USERNAME")
-                .takes_value(true)
-                .required(true)
-                .help("The username to login with"),
-        )
-        .arg(
-            Arg::with_name("password")
-                .short("p")
-                .long("password")
-                .value_name("PASSWORD")
-                .env("SN_PASSWORD")
-                .set(ArgSettings::HideEnvValues)
-                .takes_value(true)
-                .required(true)
-                .help("The password"),
-        )
-        .arg(
-            Arg::with_name("base_url")
-                .long("base-url")
-                .value_name("URL")
-                .env("SN_BASE_URL")
-                .default_value(BASE_URL)
-                .help("The API base URL"),
-        )
-        .subcommand(
-            SubCommand::with_name("create")
-                .alias("c")
-                .about("Creates a new note [short: c]")
-                .arg(
-                    Arg::with_name("name")
-                        .value_name("NAME")
-                        .required(true)
-                        .help("The name of the new note"),
-                )
-                .arg(
-                    Arg::with_name("file")
-                        .value_name("FILE")
-                        .help("File containing the Markdown content; omit for stdin"),
-                ),
-        )
-        .get_matches();
+#[derive(Debug, StructOpt)]
+#[structopt(name = NAME, bin_name = NAME, about = "A Supernotes client")]
+#[structopt(setting = AppSettings::VersionlessSubcommands)]
+struct Opt {
+    /// The username to login with
+    #[structopt(short, long, value_name = "USERNAME", env = "SN_USERNAME")]
+    username: String,
 
-    let username = matches.value_of("username").unwrap();
-    let password = matches.value_of("password").unwrap();
-    let mut base_url = matches.value_of("base_url").unwrap().to_string();
-    if !base_url.ends_with('/') {
-        base_url = format!("{}/", base_url);
+    /// The password
+    #[structopt(
+        short,
+        long,
+        value_name = "PASSWORD",
+        env = "SN_PASSWORD",
+        hide_env_values = true
+    )]
+    password: String,
+
+    /// The API base URL
+    #[structopt(
+        long,
+        value_name = "URL",
+        env = "SN_BASE_URL",
+        default_value = BASE_URL,
+        parse(try_from_str = parse_abs_url)
+    )]
+    base_url: Url,
+
+    #[structopt(subcommand)]
+    cmd: Command,
+}
+
+#[derive(Debug, StructOpt)]
+enum Command {
+    /// Creates a new Supernotes card
+    #[structopt(alias = "c")]
+    Create {
+        /// The name of the new card
+        #[structopt(value_name = "NAME")]
+        name: String,
+
+        /// File with the card body in Markdown  [default: stdin]
+        #[structopt(value_name = "FILE")]
+        file: Option<String>,
+    },
+}
+
+fn parse_abs_url(src: &str) -> Result<Url> {
+    let mut url = Url::parse(src)?;
+    match url.scheme() {
+        "http" | "https" => (),
+        _ => return Err(anyhow!("scheme must be either http or https")),
+    };
+    if url.cannot_be_a_base() {
+        return Err(anyhow!("not an absolute URL"));
     }
+    if !url.path().ends_with('/') {
+        url.set_path(&format!("{}/", url));
+    };
+    Ok(url)
+}
 
-    let token_response = get_token(&base_url, username, password)?;
-    let token = token_response.access_token();
-
-    match matches.subcommand() {
-        ("create", Some(submatches)) => {
-            let name = submatches.value_of("name").unwrap();
-            let file = submatches.value_of("file");
-            create(&base_url, token, name, file).context("error creating card")
-        }
-        _ => unreachable!(),
+fn main() -> Result<()> {
+    let opt: Opt = Opt::from_args();
+    match opt.cmd {
+        Command::Create { name, file } => create(
+            &opt.base_url,
+            &opt.username,
+            &opt.password,
+            &name,
+            file.as_deref(),
+        ),
     }
 }
 
@@ -96,12 +97,14 @@ fn main() -> Result<()> {
 ///
 /// Example:
 /// ```
-/// let response = get_token("https://example.com", "username", "password")?;
+/// let response = get_token(Url::parse("https://example.com")?, "username", "password")?;
 /// let access_token = response.access_token();
 /// ```
-fn get_token(base_url: &str, username: &str, password: &str) -> Result<BasicTokenResponse> {
-    let auth_url = Url::parse("http://127.0.0.1/unused").unwrap();
-    let token_url = Url::parse(base_url)?.join("user/login")?;
+fn get_token(base_url: &Url, username: &str, password: &str) -> Result<BasicTokenResponse> {
+    let auth_url = Url::parse("http://127.0.0.1/unused")?;
+    let token_url = base_url
+        .join("user/login")
+        .context(format!("invalid URL: {}", base_url))?;
 
     let client = BasicClient::new(
         ClientId::new(String::from("unused")),
@@ -125,10 +128,20 @@ fn get_token(base_url: &str, username: &str, password: &str) -> Result<BasicToke
 /// Example:
 /// ```
 /// let token = AccessToken::new(String::from("secret"));
-/// let result = create("https://example.com", &token, "card name", "card.md");
+/// let result = create(Url::parse("https://example.com")?, &token, "card name", "card.md");
 /// ```
-fn create(base_url: &str, token: &AccessToken, name: &str, file: Option<&str>) -> Result<()> {
+fn create(
+    base_url: &Url,
+    username: &str,
+    password: &str,
+    name: &str,
+    file: Option<&str>,
+) -> Result<()> {
     let content = read_content(file)?;
+
+    let token_response = get_token(base_url, username, password)?;
+    let token = token_response.access_token();
+
     create_card(base_url, &token, name, &content)?;
     Ok(())
 }
@@ -140,9 +153,9 @@ fn create(base_url: &str, token: &AccessToken, name: &str, file: Option<&str>) -
 /// let token = AccessToken::new(String::from("secret"));
 /// let result = create_card("https://example.com", &token, "card name", "card content");
 /// ```
-fn create_card(base_url: &str, token: &AccessToken, name: &str, markup: &str) -> Result<Response> {
+fn create_card(base_url: &Url, token: &AccessToken, name: &str, markup: &str) -> Result<Response> {
     let client = reqwest::blocking::Client::new();
-    let url = Url::parse(base_url)?.join("cards/")?;
+    let url = base_url.join("cards/")?;
     let data = card_data(name, markup);
 
     let response = client
@@ -175,7 +188,7 @@ fn card_data(name: &str, markup: &str) -> Value {
 
 fn read_content(file: Option<&str>) -> Result<String> {
     match file {
-        Some(f) => fs::read_to_string(f).context(format!("could not read {}", f)),
+        Some(f) => fs::read_to_string(f).context(format!("could not read file: {}", f)),
         None => {
             let mut content = String::new();
             io::stdin()
@@ -188,8 +201,9 @@ fn read_content(file: Option<&str>) -> Result<String> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use mockito::{mock, server_url, Matcher};
+
+    use super::*;
 
     #[test]
     fn test_get_token() -> Result<()> {
@@ -199,7 +213,7 @@ mod tests {
             .with_body(json!({"access_token": "token", "token_type": "bearer"}).to_string())
             .create();
 
-        let token = get_token(&server_url(), "username", "password")?;
+        let token = get_token(&Url::parse(&server_url())?, "username", "password")?;
         assert_eq!(token.access_token().secret(), "token");
 
         endpoint.assert();
@@ -220,7 +234,7 @@ mod tests {
             .create();
 
         let token = AccessToken::new(String::from("secret"));
-        create_card(&server_url(), &token, "name", "markup")?;
+        create_card(&Url::parse(&server_url())?, &token, "name", "markup")?;
 
         endpoint.assert();
         Ok(())
@@ -236,3 +250,4 @@ mod tests {
         assert_eq!(card["card"]["html"], "<ul>\n<li>item</li>\n</ul>\n");
     }
 }
+//[cfg(test)]

@@ -16,6 +16,11 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v2
 
+      - name: Install toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+
       - name: Run audit check
         uses: actions-rs/audit-check@v1
         with:

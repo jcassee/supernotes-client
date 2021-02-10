@@ -10,12 +10,10 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v2
 
-      - name: Install stable toolchain
+      - name: Install toolchain
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: stable
-          override: true
 
       - name: Run cargo check
         uses: actions-rs/cargo@v1
@@ -23,23 +21,45 @@ jobs:
           command: check
 
   test:
-    name: Test
+    name: Test with coverage
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
         uses: actions/checkout@v2
 
-      - name: Install stable toolchain
+      - name: Install toolchain
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: stable
-          override: true
+          components: llvm-tools-preview
 
-      - name: Run cargo test
+      - name: Run cargo test with coverage
         uses: actions-rs/cargo@v1
         with:
           command: test
+          args: --all-features --no-fail-fast
+        env:
+          RUSTFLAGS: '-Zinstrument-coverage'
+
+      - name: Generate coverage report
+        uses: actions-rs/grcov@0.2-proto
+        with:
+          args: >
+            .
+            --llvm
+            --branch
+            --source-dir ./src
+            --binary-path ./target/debug/
+            --output-path ./target/debug/lcov.info
+            --output-type lcov
+            --ignore-not-existing
+            --excl-start '#\[cfg\(test\)\]'
+            --excl-stop '//\[cfg\(test\)\]'
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v1
+        with:
+          files: ${{ steps.coverage.outputs.report }}
 
   lints:
     name: Lint
@@ -48,12 +68,10 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v2
 
-      - name: Install stable toolchain
+      - name: Install toolchain
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: stable
-          override: true
           components: rustfmt, clippy
 
       - name: Run cargo fmt
