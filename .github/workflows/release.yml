@@ -1,0 +1,58 @@
+on:
+  push:
+    tags:
+      - '[0-9]+.*'
+
+name: Release
+
+jobs:
+  create_release:
+    name: Create release
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+    steps:
+      - name: Get release message
+        id: release_message
+        run: echo "::set-output name=message::$(git log --format=%B -n1)"
+
+      - name: Create release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          body: ${{ steps.release_message.outputs.message }}
+
+  upload_assets:
+    needs: create_release
+    name: Upload assets
+    runs-on: ${{ format('{0}-latest', matrix.os) }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu
+          - os: macos
+          - os: windows
+            ext: .exe
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      - name: Create release build
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release
+
+      - name: Upload release asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create_release.outputs.upload_url }}
+          asset_name: sn_${{ matrix.os }}${{ matrix.ext }}
+          asset_path: target/release/sn${{ matrix.ext }}
+          asset_content_type: application/octet-stream

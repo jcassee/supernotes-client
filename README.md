@@ -1,5 +1,6 @@
 # Supernotes Client
 
+[![Latest Release](https://img.shields.io/github/v/release/jcassee/supernotes-client?sort=semver)](https://github.com/jcassee/supernotes-client/releases/latest)
 [![CI](https://github.com/jcassee/supernotes-client/workflows/CI/badge.svg)](https://github.com/jcassee/supernotes-client/actions?query=workflow%3ACI)
 [![codecov](https://codecov.io/gh/jcassee/supernotes-client/branch/master/graph/badge.svg)](https://codecov.io/gh/jcassee/supernotes-client)
 [![License](https://img.shields.io/github/license/jcassee/supernotes-client)](https://github.com/jcassee/supernotes-client/blob/master/LICENSE)
