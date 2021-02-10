@@ -1,5 +1,9 @@
 # Supernotes Client
 
+[![CI](https://github.com/jcassee/supernotes-client/workflows/CI/badge.svg)](https://github.com/jcassee/supernotes-client/actions?query=workflow%3ACI)
+[![codecov](https://codecov.io/gh/jcassee/supernotes-client/branch/master/graph/badge.svg)](https://codecov.io/gh/jcassee/supernotes-client)
+[![License](https://img.shields.io/github/license/jcassee/supernotes-client)](https://github.com/jcassee/supernotes-client/blob/master/LICENSE)
+
 This is a simple command line [Supernotes](https://supernotes.app/) tool
 written in Rust. Currently it only creates new cards.
 
