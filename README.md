@@ -5,8 +5,14 @@
 [![codecov](https://codecov.io/gh/jcassee/supernotes-client/branch/master/graph/badge.svg)](https://codecov.io/gh/jcassee/supernotes-client)
 [![License](https://img.shields.io/github/license/jcassee/supernotes-client)](https://github.com/jcassee/supernotes-client/blob/master/LICENSE)
 
-This is a simple command line [Supernotes](https://supernotes.app/) tool
+This is a simple command line [Supernotes](https://supernotes.app/) utility
 written in Rust. Currently it only creates new cards.
+
+
+## Installation
+
+Download the binary for your system from the
+[latest release page](https://github.com/jcassee/supernotes-client/releases).
 
 
 ## Usage
@@ -28,10 +34,3 @@ If the file is omitted, the body is read from the standard input.
     - Milk
     - Bread
     .
-
-## Build
-
-The Cargo manifest is set up to optimize and strip the release binary, so you
-need to use the nightly toolchain.
-
-    cargo +nightly -Z unstable-options build --release
